@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Data Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        /*// 自動刷新頁面函數
+        function autoRefresh() {
+            // 每 60 秒重新載入一次頁面
+            setTimeout(function() {
+                location.reload();
+            }, 60000);
+        }
+    
+        // 頁面加載後開始自動刷新
+        window.onload = function() {
+            autoRefresh();
+        };*/
+    </script>
+</head>
+<body style ="background-color: gray;">
+    <h1 align="center">MQTT Connection Status</h1>
+    {% if connected %}
+        <p align="center">The MQTT client is connected to the broker.</p>
+    {% else %}
+        <p align="center">The MQTT client is not connected to the broker.</p>
+    {% endif %}
+
+    <h2 align="center">MQTT Data Visualization</h2>
+    <canvas id="co2Chart" width="400" height="100"></canvas>
+    <canvas id="temperatureChart" width="400" height="100"></canvas>
+    <canvas id="HumidityChart" width="400" height="100"></canvas>
+    <canvas id="PressureChart" width="400" height="100"></canvas>
+    <canvas id="VPDChart" width="400" height="100"></canvas>
+    <canvas id="Wind_SpeedChart" width="400" height="100"></canvas>
+    <canvas id="ETChart" width="400" height="100"></canvas>
+
+    <script>
+        var data = {{ data|tojson|safe }};
+        console.log(data);
+        /*var data = {
+            "date": "20165-25-165",
+            "time": "45:85:85",
+            "conc_ch": [
+              1442,
+              28.19,
+              79.98,
+              1010.46,
+              0.77,
+              10,
+              0,
+              0.18
+            ]
+        }*/
+        var date = data.date;
+        var time = data.time;
+
+        var x_axis = Array.from({length: 10}, (_, i) => (i + 1).toString());
+        var labels = ["CO2", "Temperature", "Humidity", "Pressure", "VPD", "Wind Speed", "Wind Direction", "Evapotranspiration"];
+        //var values = data.conc_ch;
+        //var label = [];
+        var co2Data = [];
+        var temperatureData = [];
+        var HumidityData = [];
+        var PressureData = [];
+        var VPDData = [];
+        var WindspeedData = [];
+        var ETData = [];
+
+        var co2_x_axis = [];
+        var hum_x_axis = [];
+        var vpd_x_axis = [];
+        var press_x_axis = [];
+        var temp_x_axis = [];
+        var ET_x_axis = [];
+        var time_x_axis = [];
+
+        /*co2Data.push(1200)
+        temperatureData.push(30)*/
+
+        var ctx1 = document.getElementById('co2Chart').getContext('2d');
+        var co2Chart = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: time_x_axis,
+                datasets: [{
+                    label: labels[0],
+                    data: co2Data,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var ctx2 = document.getElementById('temperatureChart').getContext('2d');
+        var temperatureChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: time_x_axis,
+                datasets: [{
+                    label: labels[1],
+                    data: temperatureData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var ctx3 = document.getElementById('HumidityChart').getContext('2d');
+        var HumidityChart = new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: time_x_axis,
+                datasets: [{
+                    label: labels[2],
+                    data: HumidityData,
+                    backgroundColor: 'rgba(54, 255, 235, 0.2)',
+                    borderColor: 'rgba(54, 255, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var ctx4 = document.getElementById('PressureChart').getContext('2d');
+        var PressureChart = new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: time_x_axis,
+                datasets: [{
+                    label: labels[3],
+                    data: PressureData,
+                    backgroundColor: 'rgba(54, 255, 100, 0.2)',
+                    borderColor: 'rgba(54, 255, 100, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var ctx5 = document.getElementById('VPDChart').getContext('2d');
+        var VPDChart = new Chart(ctx5, {
+            type: 'line',
+            data: {
+                labels: time_x_axis,
+                datasets: [{
+                    label: labels[4],
+                    data: VPDData,
+                    backgroundColor: 'rgba(255, 255, 100, 0.2)',
+                    borderColor: 'rgba(255, 255, 100, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var ctx6 = document.getElementById('ETChart').getContext('2d');
+        var ETChart = new Chart(ctx6, {
+            type: 'line',
+            data: {
+                labels: time_x_axis,
+                datasets: [{
+                    label: labels[7],
+                    data: ETData,
+                    backgroundColor: 'rgba(100, 255, 200, 0.2)',
+                    borderColor: 'rgba(100, 255, 200, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+
+        function updateCharts(newData) {
+            //co2Data.push(newData.conc_ch[0]);  // CO2 value
+            //temperatureData.push(newData.conc_ch[1]);  // Temperature value
+            //co2Data.data.datasets[0].data.push(newData.conc_ch[0]);
+            //temperatureData.data.datasets[0].data.push(newData.conc_ch[1]);
+            
+            co2Chart.data.labels.push(newData.time);
+            if(co2Chart.data.labels.length > 10){
+                co2Chart.data.labels.shift();
+            }
+            
+
+            addData(co2Chart,newData.conc_ch[0],10)
+
+            //temperatureChart.data.labels.push(time);
+            addData(temperatureChart,newData.conc_ch[1],10)
+
+            //HumidityChart.data.labels.push(time);
+            addData(HumidityChart,newData.conc_ch[2],10)
+
+            //PressureChart.data.labels.push(time);
+            addData(PressureChart,newData.conc_ch[3],10)
+
+            //VPDChart.data.labels.push(time);
+            addData(VPDChart,newData.conc_ch[4],10)
+
+            //ETChart.data.labels.push(time);
+            addData(ETChart,newData.conc_ch[7],10)
+
+            
+
+            
+
+            console.log("Temperature data:", temperatureData);  
+            
+        }
+        //updateCharts(data)
+
+        function addData(myChart/*, label*/, newData, maxPoints) {
+
+            //console.log(myChart);
+        
+            //myChart.data.labels.push(label);
+            myChart.data.datasets[0].data.push(newData);
+        
+            if(myChart.data.datasets[0].data.length > maxPoints) {
+                shiftValue(myChart);
+            } 
+            else {
+                myChart.update();
+            }
+        
+            //console.log(myChart.data.labels);
+        
+            //let lastIndex = myChart.data.datasets[0].data.length;
+            //console.log("Ｘ軸固定數量:" + (lastIndex));
+        
+            myChart.update();
+        
+            //console.log("末筆 X 軸標籤：" + labels.slice(labels.length - 1));
+        
+        }
+
+        function shiftValue(myChart) {
+            myChart.data.datasets[0].data.shift();  
+            myChart.update();  
+        }
+
+        function fetchNewData() {
+            fetch('/get_new_data')  
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateCharts(data);  
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+        setInterval(fetchNewData, 60000);
+
+        fetchNewData();
+    </script>
+</body>
+</html>
